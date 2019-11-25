@@ -1,0 +1,244 @@
+---
+title: "Proyecto"
+author: "David Borque"
+date: "13/11/2019"
+output: 
+  html_document:
+    theme: journal
+    toc: yes
+---
+
+
+
+```{r setup, include=FALSE}
+library(plyr)
+library(dygraphs)
+library(ggplot2)
+library(xts)
+library(rvest)
+library(knitr)
+
+
+```
+
+
+
+***
+
+## Hablando sobre expresiones regulares
+<br />
+En este primer punto se compararán dos páginas web de expresiones regulares, viendo sus puntos más fuertes y los más débiles. El primer sitio web se trata de [developer.mozilla.org](https://developer.mozilla.org/es/docs/Web/JavaScript/Guide/Regular_Expressions) y el segundo es [diegocalvo.es](http://www.diegocalvo.es/expresiones-regulares-en-r/). Ambos sitios web proporcionan información acerca de las expresiones regulares, aunque de distinta forma, además de proporcionar distintos ejemplos. 
+
+El primer caso, [developer.mozilla.org](https://developer.mozilla.org/es/docs/Web/JavaScript/Guide/Regular_Expressions), muestra un gran conjunto de información, además de que cada caso es seguido de un ejemplo. El único problema es que al tener como objetivo la programación en JavaScript, los ejemplos que añade de forma extra no serían útiles para el uso de R. Destacaría de esta página la capacidad que tiene el autor para realizar buenos ejemplos que ayudan a la comprensión de las expresiones regulares. 
+
+
+La segunda página web, [diegocalvo.es](http://www.diegocalvo.es/expresiones-regulares-en-r/), se centra en expresiones regulares, aunque, en este caso, están enfocadas a la programación en R, por lo que esto hace que sea su punto más fuerte en comparación con la primera página web. Se destaca que añade ejemplos usando fórmulas de R, por lo que podría ayudar mejor a la asimilación de conceptos, aunque no tiene tantos ejemplos como la web previamente descrita. Al pie de la página se puede encontrar una tabla que resume las expresiones, sin embargo, la primera página web es más completa en este sentido. 
+
+Para concluir, destacaría la labor que podrían realizar conjuntas, el primer sitio web ofrece una información más completa con muchos casos ejemplificados y la segunda aportaría la aplicación a R, por lo que supondría el uso de las expresiones aprendidas en el primer sitio.
+
+
+***
+
+
+## Hablando sobre R Markdown
+
+<br />
+
+En este apartado nos centraremos en la comparación de dos páginas web que tratan sobre R Markdown. Al igual que se hizo en el aprtado anterior, se destacarán los puntos fuertes y débiles de cada página y se hará una comparación. La primera página elegida es la principal de RStudio que trata sobre ello, [R Markdown from RStudio](https://rmarkdown.rstudio.com/lesson-1.html). El segundo sitio web es de [Jacolien van Rij](http://www.jacolienvanrij.com/Tutorials/tutorialMarkdown.html).
+
+El primer sitio web, [R Markdown from RStudio](https://rmarkdown.rstudio.com/lesson-1.html), muestra detalladamente el uso de muchas funcionalidades, utiliza capturas de pantalla para apoyar la presentación. Aunque si el nivel de inglés del lector es bajo, entonces no sería recomendable este sitio, ya que está en este idioma. Cabría destacar de este sitio web la pestaña de *Cheatsheets* debido a que ofrece un archivo PDF que muestra un resumen muy esquemático de lo previamente aprendido en la página.
+
+El segundo sitio web se trata de [Jacolien van Rij](http://www.jacolienvanrij.com/Tutorials/tutorialMarkdown.html), al igual que la anterior web, también se encuentra en inglés. No da tantos detalles, pero se centra en lo importante, además de que muestra cómo hacerlo en código con su resultado.
+
+Si sólo pudiese elegir uno de los sitios webs me quedaría con el de [R Markdown from RStudio](https://rmarkdown.rstudio.com/lesson-1.html), principalmente, por la gran aportación de información usando casos prácticos.
+
+***
+
+## Evolución de la competividad de acuerdo a las divisas 
+<br />
+
+### Presentación
+
+<br />
+```{r datos, include=FALSE}
+
+
+JPY <- read.csv("dat/Datos históricos EUR_JPY.csv", header=T,sep=",",dec=",")
+USD <- read.csv("dat/Datos históricos EUR_USD.csv", header=T,sep=",",dec=",")
+GBP <- read.csv("dat/Datos históricos EUR_GBP.csv", header=T,sep=",",dec=",")
+CAD <- read.csv("dat/Datos históricos EUR_CAD.csv", header=T,sep=",",dec=",")
+
+
+cambio_orden <- function(x){
+  x <- x[nrow(x):1,]
+}
+
+nom_colum <- function(x){
+  colnames(x) <- c("Fecha","Ultimo","Apertura","Maximo","Minimo","Variacion")
+  x
+}
+
+fecha <- function(x){
+  x <- ddply(x,.(),transform, Fecha = as.Date(Fecha,format= "%d.%m.%Y"))
+  x$.id <- NULL
+  x
+}
+
+numeros <- function(x){
+  x <- gsub("\\%","",x)
+  x <- as.numeric(gsub(",",".",x))
+}
+
+corr_num <- function(x){
+  x$Variacion <- lapply(x$Variacion, numeros)
+  x
+}
+
+base_ene <- function(x){
+  x$Base <- 100*x$Ultimo/x$Ultimo[1]
+  x
+}
+
+JPY <- cambio_orden(JPY)
+JPY <- nom_colum(JPY)
+JPY <- fecha(JPY)
+JPY <- corr_num(JPY)
+JPY <- base_ene(JPY)
+
+USD <- cambio_orden(USD)
+USD <- nom_colum(USD)
+USD <- fecha(USD)
+USD <- corr_num(USD)
+USD <- base_ene(USD)
+
+GBP <- cambio_orden(GBP)
+GBP <- nom_colum(GBP)
+GBP <- fecha(GBP)
+GBP <- corr_num(GBP)
+GBP <- base_ene(GBP)
+
+CAD <- cambio_orden(CAD)
+CAD <- nom_colum(CAD)
+CAD <- fecha(CAD)
+CAD <- corr_num(CAD)
+CAD <- base_ene(CAD)
+
+
+Forex <- cbind(JPY[,c(1,2)],USD[,2],CAD[,2],GBP[,2])
+Forex_base <- cbind(JPY[,c(1,7)],USD[,7],CAD[,7],GBP[,7])
+
+colnames(Forex) <- c("Fecha","JPY","USD","CAD","GBP")
+colnames(Forex_base) <- c("Fecha","JPY","USD","CAD","GBP")
+
+
+gg_Forex <- ggplot(data=Forex_base, aes(x=Fecha)) + 
+  geom_line(aes(y=JPY, color = "JPY"), size=1) + 
+  geom_line(aes(y=CAD, color = "CAD"),size=1) +
+  geom_line(aes(y=USD, color = "USD"),size=1) + 
+  geom_line(aes(y=GBP, color = "GBP"),size=1) +
+  scale_colour_manual("Divisas", 
+                      breaks = c("JPY", "CAD","USD","GBP"),
+                      values = c("#fdbb84", "#a6bddb","#a1d99b","#fa9fb5"))+
+  ggtitle("Evolución de divisas frente al Euro (Base 100 = 1 de enero de 2019)")+
+  xlab("1 de enero - 31 de ocutbre de 2019")+
+  ylab("")+
+  geom_hline(yintercept=100)+
+  theme_dark()+
+  theme(plot.background = element_rect(fill = "antiquewhite"))
+
+```
+
+
+En este apartado estudiaremos el nivel de competitividad de las exportaciones e importaciones de distintos países drente a la Zona Euro. Para ello se compararán la evolución de sus respectivas divisas frente al Euro desde enero hasta final de octubre, usando una base 100 el 1 de enero de 2019 para poder comparar la evolución entre los distintos países. Las países analizados son:
+
+* Japón, su moneda el yen (JPY)
+* Estados Unidos, el dólar (USD)
+* Canadá, dólas canadiense (CAD)
+* Gran Bretaña, libra esterlina (GBP)
+
+
+Los datos han sido extraídos de [investing](https://es.investing.com/) ( [JPY](https://es.investing.com/currencies/eur-jpy-historical-data), [USD](https://es.investing.com/currencies/eur-usd-historical-data), [CAD](https://es.investing.com/currencies/eur-cad-historical-data), [GBP](https://es.investing.com/currencies/eur-gbp-historical-data)) desde el 1 de enero de 2019 hasta el 31 de octubre del mismo año.
+
+
+
+### Análisis gráfico
+
+<br />
+
+```{r graph, echo=FALSE}
+gg_Forex
+```
+
+El gráfico está en base 100, ya que al tener valores de distintas magnitudes haría complicado el análisis conjunto y la comparativa con los datos a principio de año. Valores superiores a 100 indican una pérdida de competividad para las exportaciones de la Zona Euro, es decir, al resto de países les sale más caro comprar los productos. Cuando el valor es menor de 100, ocurre el efecto contrario, se abaratan las exportaciones, pero se encarecen las importaciones.
+
+Se puede observar que en su conjunto se ha ganado competitividad en el ámbito de las exportaciones frente al resto de países, aunque cabría destacar el pico ocurrido entre julio y octubre con la libra. Este hecho sería motivado, principalmente, por el Brexit.
+
+Las conclusiones sobre la Zona Euro:
+
+* Pierde poder importador.
+* Gana competividad en las exportaciones.
+* Devaluación del Euro.
+
+<br />
+
+***
+
+### La evolución del Yen
+<br />
+```{r dinamGrap, include=FALSE}
+
+
+JPY_xts <- xts(JPY$Ultimo,order.by=JPY$Fecha,frequency = 365)
+
+JPY_graph <- dygraph(JPY_xts, ylab="Último",
+        main = "Evolución del Yen (1 de enero a 31 de octubre)") %>%
+  dySeries(label = "JPY") %>%
+  dyOptions(colors = "red") %>%
+  dyRangeSelector()
+
+```
+
+
+En este apartado se observa un gráfico dinámico para estudiar los valores reales del Yen para estudiar el tipo de cambio:
+
+
+```{r JPY_graph, echo=FALSE}
+JPY_graph
+```
+
+***
+
+
+### Datos actualizados del mercado de divisas
+<br />
+
+Últimos datos de los principales cambios de divisas: 
+<br />
+
+```{r webscraping, echo=FALSE, include=FALSE}
+
+
+url <- "https://www.eleconomista.es/mercados-cotizaciones/divisas/"
+forex_actual <- read_html(url)
+forex_actual <- html_table(forex_actual)
+forex_actual <- forex_actual[[1]][,-2]
+
+numeros2 <- function(x){
+  x <- gsub(",",".",x)
+}
+
+
+forex_actual$Cambio <- lapply(forex_actual$Cambio,numeros2)
+forex_actual$Diferencia <- lapply(forex_actual$Diferencia,numeros2)
+forex_actual$`Diferencia %`<- lapply(forex_actual$`Diferencia %`,numeros2)
+
+# No se ha realizado la limpieza completa de los datos, ya que para su representación y comprensión es mejor dejarlos con los porcentajes y signos de más y menos.
+
+```
+
+```{r divisas, echo=FALSE}
+kable(forex_actual)
+```
+<br />
+
+
