@@ -6,7 +6,7 @@ Este trabajo consiste en el estudio de competencia de varios países con el uso 
 * Canadá, dólas canadiense (CAD)
 * Gran Bretaña, libra esterlina (GBP)
 
-Librerías necesarias:
+_Librerías necesarias:_
 * plyr
 * dygraphs
 * ggplot2
